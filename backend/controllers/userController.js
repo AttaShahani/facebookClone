@@ -1,7 +1,9 @@
 const asyncErrors = require("../middlewares/asyncErrors");
 const ErrorHandler = require("../utils/errorhandler");
-const User = require("../models/User")
+const User = require("../models/User");
+const sendJWTToken = require("../utils/token")
 
+// User Registration 
 exports.userRegister = asyncErrors( async (req,res,next)=>{
     const {username,email,password} = req.body;
     const user = await User.create({
@@ -16,8 +18,5 @@ exports.userRegister = asyncErrors( async (req,res,next)=>{
         }
     })
 
-    res.status(201).json({
-        success:true,
-        user
-    })
+   sendJWTToken(user,201,res)
 })
