@@ -48,3 +48,38 @@ exports.userLogout = asyncErrors(async (req,res,next)=>{
         message:"User Logged Out"
     })
 })
+
+// User Account Updation
+exports.updateProfile = asyncErrors(async (req,res,next)=>{
+    const newUserData = {
+        username:req.body.name,
+        email: req.body.email,
+    }
+
+    const user = await User.findByIdAndUpdate(req.user.id,newUserData,{new:true})
+        res.status(200).json({
+            success: true,
+            message: "User Updated Successfully",
+            user
+        })
+})
+// User Password Updation
+exports.updatePassword = asyncErrors(async (req,res,next)=>{
+    const user = await User.findById(req.user.id).select("+password");
+    const {oldPassword, newPassword} = req.body;
+    if(!oldPassword || !newPassword) {
+        return next( new ErrorHandler("You Must Provide old and new Passwords",401))
+    }
+
+    const isSamePassword = await user.comparePassword(oldPassword);
+    if(!isSamePassword) {
+        return next(new ErrorHandler("Incorrect Old Password",403))
+    }
+
+    user.password = newPassword;
+    await user.save()
+    res.status(200).json({
+        success: true,
+        message: "Your Password Successfully updated"
+    });
+})

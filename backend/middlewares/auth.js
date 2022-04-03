@@ -8,7 +8,7 @@ exports.isAuthenticatedUser = asyncErrors(async (req,res,next)=>{
     if(!token){
         return next( new ErrorHandler("Please Login to access",401))
     }
-    const {tokenData} = jwt.verify(token,process.env.JWT_SECRET);
+    const tokenData = jwt.verify(token,process.env.JWT_SECRET_KEY);
     req.user = await User.findById(tokenData.id);
     next();
 })
