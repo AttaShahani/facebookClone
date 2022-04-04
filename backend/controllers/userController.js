@@ -118,3 +118,29 @@ exports.followUnfollowUsers = asyncErrors(async (req,res,next)=>{
             message: "User Followed Successfully"
         })
 })
+// Get Followers 
+exports.getAllFollowers = asyncErrors(async (req,res,next)=>{
+    const currentUser = await User.findById(req.user.id)
+    const myFollowers = await User.find({
+        followings:{
+            $in: currentUser._id
+        }
+    })
+    res.status(200).json({
+        success: true,
+        myFollowers
+    })
+})
+// Get All Followings 
+exports.getAllFollowings = asyncErrors(async (req,res,next)=>{
+    const currentUser = await User.findById(req.user.id)
+    const myFollowings = await User.find({
+        followers:{
+            $in: currentUser._id
+        }
+    })
+    res.status(200).json({
+        success: true,
+        myFollowings
+    })
+})
