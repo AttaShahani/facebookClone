@@ -40,6 +40,7 @@ exports.userLogin = asyncErrors( async (req,res,next)=>{
 })
 
 // User Logout 
+
 exports.userLogout = asyncErrors(async (req,res,next)=>{
     res.cookie("token",null,{expires:new Date(Date.now()),httpOnly:true});
 
@@ -50,6 +51,7 @@ exports.userLogout = asyncErrors(async (req,res,next)=>{
 })
 
 // User Account Updation
+
 exports.updateProfile = asyncErrors(async (req,res,next)=>{
     const newUserData = {
         username:req.body.name,
@@ -63,7 +65,9 @@ exports.updateProfile = asyncErrors(async (req,res,next)=>{
             user
         })
 })
+
 // User Password Updation
+
 exports.updatePassword = asyncErrors(async (req,res,next)=>{
     const user = await User.findById(req.user.id).select("+password");
     const {oldPassword, newPassword} = req.body;
@@ -82,4 +86,35 @@ exports.updatePassword = asyncErrors(async (req,res,next)=>{
         success: true,
         message: "Your Password Successfully updated"
     });
+})
+
+// Follow and Unfollow Users 
+
+exports.followUnfollowUsers = asyncErrors(async (req,res,next)=>{
+    const userToFollow = await User.findById(req.params.id);
+    const me = await User.findById(req.user.id)
+    if(!userToFollow){
+        return next(new ErrorHandler("User Not Found",404))
+    }
+    if(userToFollow._id.toString() === me._id.toString()){
+        return next(new ErrorHandler("You can't Follow Yourself",403))
+    }
+    
+    if(me.followings.includes(userToFollow._id)){
+        await me.updateOne({$pull:{followings:userToFollow._id}})
+        await userToFollow.updateOne({$pull:{followers:me._id}});
+
+        return res.status(200).json({
+            success: true,
+            message: "User Unfollowed Successfully"
+        })
+    }
+
+    await me.updateOne({$push:{followings:userToFollow._id}})
+        await userToFollow.updateOne({$push:{followers:me._id}});
+
+        res.status(200).json({
+            success: true,
+            message: "User Followed Successfully"
+        })
 })
