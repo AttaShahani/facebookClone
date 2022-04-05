@@ -52,7 +52,7 @@ exports.userLogout = asyncErrors(async (req,res,next)=>{
 
 
 // Get User Details (For Profile) 
-exports.MyProfile = asyncErrors( async (req,res,next)=>{
+exports.myProfile = asyncErrors( async (req,res,next)=>{
     const user = await User.findById(req.user.id);
     res.status(200).json({
         success: true,

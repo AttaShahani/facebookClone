@@ -14,8 +14,10 @@ app.use(cookieParser())
 
 // Routes Imports
 const userRoutes = require("./routes/userRoutes")
+const postRoutes = require("./routes/postRoutes")
 // Defining / Using Routes
 app.use("/api/v1",userRoutes)
+app.use("/api/v1",postRoutes)
 
 // Error Middleware 
 app.use(errorMiddleware);
