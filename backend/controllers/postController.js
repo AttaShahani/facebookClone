@@ -159,3 +159,36 @@ exports.deleteComment = asyncErrors(async (req, res, next) => {
     })
   }
 });
+
+// Feed Posts 
+exports.getFeedPosts = asyncErrors(async(req,res,next)=>{
+  const me = await User.findById(req.user.id);
+  const myPosts = await Post.find({owner:{$in:me._id}})
+  const myFollowingPosts = await Post.find({owner:{$in:me.followings}})
+  const myFeed = myPosts.concat(myFollowingPosts);
+  res.status(200).json({
+    success: true,
+    myFeed,
+  })
+})
+// Get My Own Posts 
+exports.getMyPosts = asyncErrors(async(req,res,next)=>{
+  const myPosts = await Post.find({owner:{$in:req.user.id}})
+  const total = myPosts.length;
+  res.status(200).json({
+    success:true,
+    myPosts,
+    total
+  })
+})
+// Get Single Post 
+exports.getSinglePost = asyncErrors(async (req,res,next)=>{
+  const post = await Post.findById(req.params.id);
+  if(!post){
+    return next (new ErrorHandler("No Such a Post Found",404))
+  }
+  res.status(200).json({
+    success: true,
+    post
+  })
+})

@@ -6,6 +6,9 @@ const {
   likeUnlikePost,
   addUpdateComment,
   deleteComment,
+  getFeedPosts,
+  getMyPosts,
+  getSinglePost,
 } = require("../controllers/postController");
 const { isAuthenticatedUser } = require("../middlewares/auth");
 
@@ -17,4 +20,13 @@ router
   .post(isAuthenticatedUser, likeUnlikePost);
 router.route("/post/:id/comment").post(isAuthenticatedUser,addUpdateComment)
 router.route("/post/:id/comment/delete").delete(isAuthenticatedUser,deleteComment)
+router.route("/feedposts").get(isAuthenticatedUser,getFeedPosts)
+router.route("/myposts").get(isAuthenticatedUser,getMyPosts)
+router.route("/post/:id").get(isAuthenticatedUser,getSinglePost)
+router.route("*").all((req,res)=>{
+  res.status(404).json({
+    success:false,
+    message:"Sorry! Requested URL Not Found!"
+  })
+})
 module.exports = router;
