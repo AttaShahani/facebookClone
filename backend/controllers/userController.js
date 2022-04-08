@@ -1,7 +1,9 @@
 const asyncErrors = require("../middlewares/asyncErrors");
 const ErrorHandler = require("../utils/errorhandler");
 const User = require("../models/User");
-const sendJWTToken = require("../utils/token")
+const post = require("../models/Post")
+const sendJWTToken = require("../utils/token");
+const Post = require("../models/Post");
 
 // User Registration 
 exports.userRegister = asyncErrors( async (req,res,next)=>{
@@ -153,4 +155,85 @@ exports.getAllFollowings = asyncErrors(async (req,res,next)=>{
         success: true,
         myFollowings
     })
+})
+
+// User Account Delete 
+exports.deleteAccount = asyncErrors(async (req,res,next)=>{
+    const me = await User.findById(req.user.id)
+   const myFollowers = me.followers;
+   const myFollowings = me.followings;
+   const myPosts = me.posts;
+   const allPosts = await Post.find()
+
+
+//    Remiving User from followers' followings 
+
+   myFollowers.forEach(async(follower) => {
+       const myFollower = await User.findById(follower);
+       myFollower.followings.forEach(async(following,index)=>{
+           if(following.toString()===me._id.toString()){
+                myFollower.followings.splice(index,1)
+                await myFollower.save()
+           }
+       })
+
+   });
+
+//    Remiving User from followings' followers
+
+   myFollowings.forEach(async(following) => {
+       const myFollowing = await User.findById(following);
+
+       myFollowing.followers.forEach(async(follower,index)=>{
+        if(follower.toString()===me._id.toString()){
+            myFollowing.followers.splice(index,1)
+             await myFollowing.save()
+        }
+    })
+   });
+
+//    Removing User Posts 
+
+   myPosts.forEach(async(postId)=>{
+       const myPost = await Post.findById(postId);
+       if(myPost){
+           await myPost.remove()
+       }
+   })
+
+//    Remiving User Likes from All Posts
+    allPosts.forEach(async(item)=>{
+        const post = await Post.findById(item._id);
+        post.likes.forEach(async(likedUser,index)=>{
+            if(likedUser.toString()===me._id.toString()){
+                post.likes.splice(index,1)
+                await post.save()
+            }
+        })
+    })
+
+//    Remiving User Comments from All Posts
+
+    allPosts.forEach(async(item)=>{
+        const commentedPost = await Post.findById(item._id);
+        commentedPost.comments.forEach(async(commentUser,index)=>{
+            if(commentUser.user.toString()===me._id.toString()){
+                commentedPost.comments.splice(index,1)
+                await commentedPost.save()
+            }
+        })
+    })
+
+    // Logging Out User 
+
+    res.cookie("token",null,{expires:new Date(Date.now()),httpOnly:true});
+
+    // Removing User 
+    await me.remove()
+
+   res.status(200).json({
+      success:true,
+      message:"Your Account Deleted Successfully"
+   })
+   
 })

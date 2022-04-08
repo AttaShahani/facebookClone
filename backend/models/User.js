@@ -2,7 +2,7 @@ const { type } = require("express/lib/response");
 const mongoose = require("mongoose");
 const validator = require("validator");
 const jwt = require("jsonwebtoken");
-const bcrypt = require('bcrypt');
+const bcrypt = require("bcrypt");
 
 const userSchema = new mongoose.Schema(
   {
@@ -57,38 +57,39 @@ const userSchema = new mongoose.Schema(
         ref: "User",
       },
     ],
-    posts :[
+    posts: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Post"
-      }
+        ref: "Post",
+      },
     ],
     role: {
       type: String,
       default: "user",
     },
   },
+  { versionKey: false },
   { timestamps: true }
 );
 
-// Hashing Password 
+// Hashing Password
 
-userSchema.pre("save", async function (next){
-  if(this.isModified("password")){
-    this.password = await bcrypt.hash(this.password,10)
+userSchema.pre("save", async function (next) {
+  if (this.isModified("password")) {
+    this.password = await bcrypt.hash(this.password, 10);
   }
-  next()
-})
+  next();
+});
 
-// Generating JWT Token 
+// Generating JWT Token
 userSchema.methods.getToken = function () {
-  return jwt.sign({id:this._id},process.env.JWT_SECRET_KEY,{
-    expiresIn : process.env.JWT_EXPIRY
-  })
-}
+  return jwt.sign({ id: this._id }, process.env.JWT_SECRET_KEY, {
+    expiresIn: process.env.JWT_EXPIRY,
+  });
+};
 
-// Matching Password for Login 
-userSchema.methods.comparePassword = async function(enteredPassword) {
-  return await bcrypt.compare(enteredPassword,this.password)
-}
-module.exports = mongoose.model("User",userSchema)
+// Matching Password for Login
+userSchema.methods.comparePassword = async function (enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
+};
+module.exports = mongoose.model("User", userSchema);
