@@ -1,9 +1,10 @@
 const asyncErrors = require("../middlewares/asyncErrors");
 const ErrorHandler = require("../utils/errorhandler");
 const User = require("../models/User");
-const post = require("../models/Post")
 const sendJWTToken = require("../utils/token");
 const Post = require("../models/Post");
+const { sendEmail } = require("../utils/sendResetEmail");
+const crypto = require("crypto")
 
 // User Registration 
 exports.userRegister = asyncErrors( async (req,res,next)=>{
@@ -236,4 +237,57 @@ exports.deleteAccount = asyncErrors(async (req,res,next)=>{
       message:"Your Account Deleted Successfully"
    })
    
+})
+
+// Forgot Password
+exports.forgotPassword = asyncErrors(async (req,res,next)=>{
+    const user = await User.findOne({email:req.body.email})
+
+    if(!user){
+        return next (new ErrorHandler("User Not Found",404))
+    }
+
+    const resetToken = await user.getPasswordResetToken()
+    await user.save()
+    const resetUrl = `http://localhost:4000/password/reset/${resetToken}`
+
+    const message = `Your Password Reset link is \n\n ${resetUrl}\n\n if You have'nt requested, simply ignore it.`
+    try {
+     await sendEmail({
+         email:user.email,
+         subject:"Fakebook Password Recovery",
+         message
+     })
+     res.status(200).json({
+         success:true,
+         message:`Email Sent to ${user.email} Successfully`
+     })
+    } catch (error) {
+        user.passwordResetToken = undefined;
+        user.passwordResetExpire = undefined;
+
+        await user.save()
+        return next (new ErrorHandler(error.message,500))
+        
+    }
+})
+// Reset password 
+exports.resetPassword = asyncErrors(async (req,res,next)=>{
+    const passwordResetToken = crypto.createHash("sha256").update(req.params.token).digest("hex")
+    const user = await User.findOne({
+        passwordResetToken,
+        passwordResetExpire:{$gte:Date.now()}
+    })
+    if(!user){
+        return next(new ErrorHandler("Invalid Token or Expired",404))
+    }
+    if(req.body.password!==req.body.confirmPassword){
+        return next(new ErrorHandler("Passwords are not matching",400))
+    }
+
+    user.password = req.body.password;
+    user.passwordResetToken = undefined;
+    user.passwordResetExpire = undefined;
+    await user.save()
+    sendJWTToken(user,200,res)
 })
