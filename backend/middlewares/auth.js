@@ -12,3 +12,12 @@ exports.isAuthenticatedUser = asyncErrors(async (req,res,next)=>{
     req.user = await User.findById(tokenData.id);
     next();
 })
+
+exports.isAuthorizedRoles = (...roles)=>{
+    return (req,res,next)=>{
+        if(!roles.includes(req.user.role)){
+            return next(new ErrorHandler(`Role: ${req.user.role} is Absolutely Not Allowed to access this resource`,403))
+        }
+        next()
+    }
+}
